@@ -1,0 +1,301 @@
+<html lang="en">
+<head>
+ <title>Particle System</title>
+ <meta charset="utf-8">
+ <style>
+canvas {
+ border: 1px solid black;;
+}
+</style>
+ <script>
+ var canvas;
+ var context;
+ var particles;
+ var timer;
+ var timer2;
+ var explosionTimer;
+ 
+ function makeParticles() {
+	//create an array of particles for our animation
+	protons   = [];
+	electrons = [];
+	neutrons  = [];
+	for(var i = 0; i < 6; i++)
+	{
+		protons.push(new Proton(-1, -1));
+		electrons.push(new Electron(-1, -1));
+	}
+	for(var i = 0; i < 3; i++) {
+		neutrons.push(new Neutron(-1, -1));
+	}
+ }
+ function degreesToRadians(degrees) {
+	 //converts from degrees to radians and returns
+	 return (degrees * Math.PI)/180;
+ }
+
+ function Proton(x, y)
+ {
+	 //the constructor for a single particle, with random starting x+y, velocity, color, and radius
+	 if(x < 0) {
+		this.x = Math.random() * window.innerWidth;
+		this.y = Math.random() * window.innerHeight;
+	 } else {
+		this.x = x;
+		this.y = y;
+	 }
+	 this.vx = Math.random()*10-10;
+	 this.vy = Math.random()*10-10;
+	 this.color = "blue";
+	 this.radius = 10;
+ }
+
+ function Electron(x, y)
+ {
+	 //the constructor for a single particle, with random starting x+y, velocity, color, and radius
+	 if(x < 0) {
+		this.x = Math.random() * window.innerWidth;
+		this.y = Math.random() * window.innerHeight;
+	 } else {
+		this.x = x;
+		this.y = y;
+	 }
+	 this.vx = Math.random()*20-10;
+	 this.vy = Math.random()*20-10;
+	 this.color = "red";
+	 this.radius = 5;
+ }
+ 
+  function Neutron()
+ {
+	 this.x = Math.random() * window.innerWidth;
+	 this.y = Math.random() * window.innerHeight;
+	 this.vx = 1 + (Math.round(Math.random()*1) * -2) * (Math.random() * 2);
+	 this.vy = 1 + (Math.round(Math.random()*1) * -2) * (Math.random() * 2);
+	 this.color = "black";
+	 this.width = 50;
+	 this.tick = 0;
+ }
+
+
+ function moveParticles() {
+	 //partially clear the screen to fade previous circles, and draw a new particle at each new coordinate
+	 context.globalCompositeOperation = "source-over";
+	 context.fillStyle = "rgba(0, 0, 0, 0.3)";
+	 context.fillRect(0, 0, canvas.width, canvas.height);
+	 context.globalCompositeOperation = "lighter";
+	 
+	 //Update Text
+	 updateText();
+	 if(explosionTimer > 0)
+		explosionTimer--;
+	 
+	 //PROTONS
+	 for(var i = 0; i < protons.length; i++)
+	 {
+		 var p = protons[i];
+		 context.beginPath();
+		 context.arc(p.x, p.y, p.radius, 0, degreesToRadians(360), true);
+		 context.fillStyle = p.color;
+		 context.fill();
+		 p.x += p.vx;
+		 p.y += p.vy;
+		 checkCollision();
+		 if(p.x < 0 + p.radius) {
+			 p.x = 0 + p.radius;
+			 p.vx *= -1;
+		 }
+		 if(p.y < 0 + p.radius) {
+			 p.y = 0 + p.radius;
+			 p.vy *= -1;
+		 }
+		 if(p.x > canvas.width - p.radius) {
+			 p.x = canvas.width - p.radius;
+			 p.vx *= -1;
+		 }
+		 if(p.y > canvas.height - p.radius) {
+			 p.y = canvas.height - p.radius;
+			 p.vy *= -1;
+		 }
+	 }
+	 
+	 //ELECTRONS
+	 for(var i = 0; i < electrons.length; i++)
+	 {
+		 var e = electrons[i];
+		 context.beginPath();
+		 context.arc(e.x, e.y, e.radius, 0, degreesToRadians(360), true);
+		 context.fillStyle = e.color;
+		 context.fill();
+		 e.x += e.vx;
+		 e.y += e.vy;
+		 checkCollision();
+		 if(e.x < 0 + e.radius) {
+			 e.x = 0 + e.radius;
+			 e.vx *= -1;
+		 }
+		 if(e.y < 0 + e.radius) {
+			 e.y = 0 + e.radius;
+			 e.vy *= -1;
+		 }
+		 if(e.x > canvas.width - (e.radius * 2)) {
+			 e.x = canvas.width - (e.radius * 2);
+			 e.vx *= -1;
+		 }
+		 if(e.y > canvas.height - (e.radius * 2)) {
+			 e.y = canvas.height - (e.radius * 2);
+			 e.vy *= -1;
+		 }
+	 }
+	 
+	 //NEUTRONS
+	 for(var i = 0; i < neutrons.length; i++)
+	 {
+		 context.beginPath();
+		 var n = neutrons[i];
+		 context.fillStyle = n.color;
+		 context.fillRect(n.x, n.y, n.width, n.width);
+		 n.tick+=5;
+		 context.fillStyle = "red";
+		 context.rect(n.x+n.tick, n.y+n.tick, n.width-n.tick*2, n.width-n.tick*2);
+		 context.strokeStyle="white";
+		 context.lineWidth="2";
+		 context.stroke();
+		 
+		 if (n.tick > n.width/2) {
+			n.tick = 0;
+		 }
+				
+		 n.x += n.vx;
+		 n.y += n.vy;
+		 checkCollision();
+		 if(n.x < 0) {
+			 n.x = 0;
+			 n.vx *= -1;
+		 }
+		 if(n.y < 0) {
+			 n.y = 0;
+			 n.vy *= -1;
+		 }
+		 if(n.x > canvas.width - n.width) {
+			 n.x = canvas.width - n.width;
+			 n.vx *= -1;
+		 }
+		 if(n.y > canvas.height - n.width) {
+			 n.y = canvas.height - n.width;
+			 n.vy *= -1;
+		 }
+	 }
+ }
+ 
+ function updateText() {
+	 context.fillStyle = "red";
+	 context.fillText("" + electrons.length + " electrons", 20, 20);
+	 context.fillStyle = "blue";
+	 context.fillText("" + protons.length + " protons", 20, 45);
+ }
+ 
+ function checkCollision() {
+	 creations = [];
+ 	 while (creations.length > 0) {
+		creations.pop();
+	 }
+	 
+	 //NEUTRONS
+	 for(var i = 0; i < neutrons.length; i++) {
+		var n = neutrons[i];
+		 for(var j = 0; j < neutrons.length; j++) {
+			 var o = neutrons[j];
+			 if (n != o && n.x+n.width >= o.x && n.x <= o.x+o.width && n.y+n.width >= o.y && n.y <= o.y+o.width) {
+				 //Reflect
+				 n.vx *= -1;
+				 n.vy *= -1;
+				 n.x += n.vx;
+				 n.y += n.vy;
+			 } 
+		 }
+	 }
+	 //ELECTRONS
+	 for(var i = 0; i < electrons.length; i++) {
+		var e = electrons[i];
+		 for(var j = 0; j < neutrons.length; j++) {
+			 var n = neutrons[j];
+			 if (e.x+e.radius >= n.x && e.x-e.radius <= n.x+n.width && e.y+e.radius >= n.y && e.y-e.radius <= n.y+n.width) {
+				 //Reflect
+				 e.vx *= -1;
+				 e.vy *= -1;
+				 e.x += e.vx;
+				 e.y += e.vy;
+			 } 
+		 }
+		 
+		 for(var k = 0; k < protons.length; k++) {
+			 var p = protons[k];
+			 if (explosionTimer < 1 && e.x+e.radius >= p.x-p.radius && e.x-e.radius <= p.x+p.radius && e.y+e.radius >= p.y-p.radius && e.y-e.radius <= p.y+p.radius) {
+				 electrons.push(new Electron(e.x, e.y));
+				 protons.push(new Proton(-1, -1));
+				 explosionTimer = 20;
+			 } 
+		 }	 
+	 }
+	 //PROTONS
+     for(var i = 0; i < protons.length; i++) {
+		 var p = protons[i];
+		 for(var j = 0; j < neutrons.length; j++) {
+			 var n = neutrons[j];
+			 if (p.x+p.radius >= n.x && p.x-p.radius <= n.x+n.width && p.y+p.radius >= n.y && p.y-p.radius <= n.y+n.width) {
+				 //Reflect
+				 p.vx *= -1;
+				 p.vy *= -1;
+				 p.x += p.vx;
+				 p.y += p.vy;
+			 } 
+		 }
+		 for(var k = 0; k < protons.length; k++) {
+			 var p2 = protons[k];
+			 if (p != p2 && p.x+p.radius >= p2.x-p2.radius && p.x-p.radius <= p2.x+p2.radius && p.y+p.radius >= p2.y-p2.radius && p.y-p.radius <= p2.y+p2.radius) {
+				 //Adjust speed
+				 p.vx *= -1;
+				 p.vy *= -1;
+				 if(p.vx > 0) 
+					p.vx++;
+				 else 
+					p.vx--;
+					
+				 if(p.vy > 0)
+					p.vy++;
+				 else
+					p.vy--;
+				 
+		         p.x += p.vx;
+				 p.y += p.vy;
+				 
+				 //Destroy the second proton
+				 protons.splice(k, 1);
+				 k--;
+			 } 
+		 }
+	 }
+}
+
+ window.onload = function() {
+ 	 canvas = document.getElementById('canvas');
+	 context = canvas.getContext('2d');
+	 makeParticles();
+
+	 timer = setInterval(moveParticles, 90);
+	
+	 context.canvas.width  = window.innerWidth;
+	 context.canvas.height = window.innerHeight;
+	 
+	 context.font = "28px serif";
+	 context.fontColor = "white";
+	 
+	 explosionTimer = 0;
+}
+</script>
+</head>
+<body>
+	<canvas id="canvas" width="400" height="500"></canvas>
+</body>
+</html>
