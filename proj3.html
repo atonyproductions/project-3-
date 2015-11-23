@@ -13,6 +13,7 @@ canvas {
  var particles;
  var timer;
  var timer2;
+ var slowDown;
  var explosionTimer;
  
  function makeParticles() {
@@ -20,6 +21,7 @@ canvas {
 	protons   = [];
 	electrons = [];
 	neutrons  = [];
+	fusions   = [];
 	for(var i = 0; i < 6; i++)
 	{
 		protons.push(new Proton(-1, -1));
@@ -32,6 +34,14 @@ canvas {
  function degreesToRadians(degrees) {
 	 //converts from degrees to radians and returns
 	 return (degrees * Math.PI)/180;
+ }
+ 
+ function Fusion(x, y) {
+	this.x = x;
+	this.y = y;
+	this.color = "blue";
+	this.radius = 2;
+	this.life = 50;
  }
 
  function Proton(x, y)
@@ -85,10 +95,30 @@ canvas {
 	 context.fillRect(0, 0, canvas.width, canvas.height);
 	 context.globalCompositeOperation = "lighter";
 	 
+	 slowDown--;
+	 if (slowDown < 1) 
+		slowDown = 50;
+	 
 	 //Update Text
 	 updateText();
 	 if(explosionTimer > 0)
 		explosionTimer--;
+		
+	 //FUSIONS
+	 for(var i = 0; i < fusions.length; i++)
+	 {
+	     var f = fusions[i];
+		 context.beginPath();
+		 context.arc(f.x, f.y, f.radius, 0, degreesToRadians(360), true);
+		 context.strokeStyle = f.color;
+		 context.stroke();
+		 f.radius+=12;
+		 f.life--;
+		 if (f.life < 1) {
+			 fusions.splice(i, 1);
+			 i--;
+		 }
+	 }
 	 
 	 //PROTONS
 	 for(var i = 0; i < protons.length; i++)
@@ -98,6 +128,12 @@ canvas {
 		 context.arc(p.x, p.y, p.radius, 0, degreesToRadians(360), true);
 		 context.fillStyle = p.color;
 		 context.fill();
+		 if (slowDown == 1) {
+			 if(p.vx > 0) p.vx--;
+			 else p.vx++;
+			 if(p.vy > 0) p.vy--;
+			 else p.vy++;
+		 }
 		 p.x += p.vx;
 		 p.y += p.vy;
 		 checkCollision();
@@ -127,6 +163,12 @@ canvas {
 		 context.arc(e.x, e.y, e.radius, 0, degreesToRadians(360), true);
 		 context.fillStyle = e.color;
 		 context.fill();
+		 if (slowDown == 1) {
+			 if(e.vx > 0) e.vx--;
+			 else e.vx++;
+			 if(e.vy > 0) e.vy--;
+			 else e.vy++;
+		 }
 		 e.x += e.vx;
 		 e.y += e.vy;
 		 checkCollision();
@@ -145,6 +187,10 @@ canvas {
 		 if(e.y > canvas.height - (e.radius * 2)) {
 			 e.y = canvas.height - (e.radius * 2);
 			 e.vy *= -1;
+		 }
+		 if(Math.abs(e.vx) < 1 && Math.abs(e.vy) < 1) {
+			 electrons.splice(i, 1);
+			 i--;
 		 }
 	 }
 	 
@@ -226,6 +272,10 @@ canvas {
 				 e.vy *= -1;
 				 e.x += e.vx;
 				 e.y += e.vy;
+				 if(e.vx > 0) e.vx+=15;
+				 else e.vx-=15;
+				 if(e.vy > 0) e.vy+=15;
+				 else e.vy-=15;
 			 } 
 		 }
 		 
@@ -249,6 +299,10 @@ canvas {
 				 p.vy *= -1;
 				 p.x += p.vx;
 				 p.y += p.vy;
+				 if(p.vx > 0) p.vx+=10;
+				 else p.vx-=10;
+				 if(p.vy > 0) p.vy+=10;
+				 else p.vy-=10;
 			 } 
 		 }
 		 for(var k = 0; k < protons.length; k++) {
@@ -273,6 +327,9 @@ canvas {
 				 //Destroy the second proton
 				 protons.splice(k, 1);
 				 k--;
+				 
+				 //Explode
+				 fusions.push(new Fusion(p.x, p.y));
 			 } 
 		 }
 	 }
@@ -292,6 +349,8 @@ canvas {
 	 context.fontColor = "white";
 	 
 	 explosionTimer = 0;
+	 
+	 slowDown = 50;
 }
 </script>
 </head>
