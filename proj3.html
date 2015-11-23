@@ -22,6 +22,7 @@ canvas {
 	electrons = [];
 	neutrons  = [];
 	fusions   = [];
+	fissions  = [];
 	for(var i = 0; i < 6; i++)
 	{
 		protons.push(new Proton(-1, -1));
@@ -36,7 +37,18 @@ canvas {
 	 return (degrees * Math.PI)/180;
  }
  
- function Fusion(x, y) {
+ function FissionLine(ox, oy, vx, vy) {
+	this.ox = ox;
+	this.oy = oy;
+	this.x  = ox;
+	this.y  = oy;
+	this.vx = vx;
+	this.vy = vy;
+	this.color = "red";
+	this.life = 15;
+ }
+ 
+  function Fusion(x, y) {
 	this.x = x;
 	this.y = y;
 	this.color = "blue";
@@ -116,6 +128,25 @@ canvas {
 		 f.life--;
 		 if (f.life < 1) {
 			 fusions.splice(i, 1);
+			 i--;
+		 }
+	 }
+	 
+	 //FISSION LINES
+	 for(var i = 0; i < fissions.length; i++)
+	 {
+		 var f = fissions[i];
+		 f.x += f.vx;
+		 f.y += f.vy;
+		 context.beginPath();
+		 context.moveTo(f.ox, f.oy);
+		 context.lineTo(f.x, f.y);
+		 context.strokeStyle = "red";
+		 context.strokeWidth = "3";
+		 context.stroke();
+		 f.life--;
+		 if (f.life < 1) {
+			 fissions.splice(i, 1);
 			 i--;
 		 }
 	 }
@@ -285,6 +316,10 @@ canvas {
 				 electrons.push(new Electron(e.x, e.y));
 				 protons.push(new Proton(-1, -1));
 				 explosionTimer = 20;
+				 fissions.push(new FissionLine(e.x, e.y,  50,  50));
+				 fissions.push(new FissionLine(e.x, e.y, -50,  50));
+				 fissions.push(new FissionLine(e.x, e.y,  50, -50));
+				 fissions.push(new FissionLine(e.x, e.y, -50, -50));
 			 } 
 		 }	 
 	 }
@@ -317,7 +352,7 @@ canvas {
 					p.vx--;
 					
 				 if(p.vy > 0)
-					p.vy++;
+					p.vy
 				 else
 					p.vy--;
 				 
